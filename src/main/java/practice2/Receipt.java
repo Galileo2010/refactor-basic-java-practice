@@ -14,39 +14,24 @@ public class Receipt {
 
     public double CalculateGrandTotal(List<Product> products, List<OrderItem> items) {
         BigDecimal subTotal = calculateSubtotal(products, items);
-
-        for (Product product : products) {
-            OrderItem curItem = findOrderItemByProduct(items, product);
-
-            BigDecimal reducedPrice = product.getPrice()
-                    .multiply(product.getDiscountRate())
-                    .multiply(new BigDecimal(curItem.getCount()));
-
-            subTotal = subTotal.subtract(reducedPrice);
-        }
         BigDecimal taxTotal = subTotal.multiply(tax);
         BigDecimal grandTotal = subTotal.add(taxTotal);
-
         return grandTotal.setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
     }
 
-
-    private OrderItem findOrderItemByProduct(List<OrderItem> items, Product product) {
-        OrderItem curItem = null;
-        for (OrderItem item : items) {
-            if (item.getCode() == product.getCode()) {
-                curItem = item;
-                break;
-            }
-        }
-        return curItem;
+    // 应该在products中查找item
+    private Product findProductByItem(OrderItem item, List<Product> products) {
+        for (Product product : products)
+            if (item.getCode() == product.getCode())
+                return product;
+        return null;
     }
 
     private BigDecimal calculateSubtotal(List<Product> products, List<OrderItem> items) {
         BigDecimal subTotal = new BigDecimal(0);
-        for (Product product : products) {
-            OrderItem item = findOrderItemByProduct(items, product);
-            BigDecimal itemTotal = product.getPrice().multiply(new BigDecimal(item.getCount()));
+        for (OrderItem item : items) {
+            Product product = findProductByItem(item, products);
+            BigDecimal itemTotal = product.getPrice().multiply(new BigDecimal(item.getCount())).multiply((new BigDecimal(1)).subtract(product.getDiscountRate()));
             subTotal = subTotal.add(itemTotal);
         }
         return subTotal;
